@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
+import { DashboardLayout } from "./components/DashboardLayout";
 
 
 function App() {
@@ -20,7 +21,9 @@ function App() {
           path="/connections"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />

@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
+import ConnectionDetails from "./pages/ConnectionDetails";
 import Contacts from "./pages/Contacts";
 import Messages from "./pages/Messages";
 import { DashboardLayout } from "./components/DashboardLayout";
@@ -25,6 +26,16 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/connections/:id"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ConnectionDetails />
               </DashboardLayout>
             </ProtectedRoute>
           }

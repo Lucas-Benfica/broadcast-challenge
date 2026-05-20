@@ -8,6 +8,7 @@ import {
   MailOutlined
 } from "@mui/icons-material";
 import { Tooltip, Zoom } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 interface ConnectionCardProps {
   connection: Connection;
@@ -29,9 +30,13 @@ const avatarThemes = [
 export const ConnectionCard = ({ connection, index, onEdit, onDelete, onAddContact, onAddMessage }: ConnectionCardProps) => {
   const themeClass = avatarThemes[index % avatarThemes.length];
   const initials = connection.name.substring(0, 2).toUpperCase();
+  const navigate = useNavigate();
 
   return (
-    <div className="bg-white border-[0.5px] border-gray-200 rounded-xl p-4 transition-colors duration-200 hover:border-gray-400 flex flex-col h-full">
+    <div
+      onClick={() => navigate(`/connections/${connection.id}`)}
+      className="bg-white border-[0.5px] border-gray-200 rounded-xl p-4 transition-colors duration-200 hover:border-[#185FA5] hover:shadow-[0_4px_12px_rgba(24,95,165,0.08)] flex flex-col h-full cursor-pointer group"
+    >
 
       {/* Topo: Avatar e Nome */}
       <div className="flex items-center gap-3 mb-3">
@@ -56,14 +61,14 @@ export const ConnectionCard = ({ connection, index, onEdit, onDelete, onAddConta
       </div>
 
       {/* Rodapé: Ações */}
-      <div className="pt-3 border-t-[0.5px] border-gray-100 flex justify-between items-center gap-1">
+      <div className="pt-3 border-t-[0.5px] border-gray-100 flex justify-between items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
         <div className="flex gap-1">
           {onAddContact && (
             <Tooltip title="Adicionar Contato" placement="top" arrow slots={{
               transition: Zoom,
             }}>
               <button
-                onClick={() => onAddContact(connection.id)}
+                onClick={(e) => { e.stopPropagation(); onAddContact(connection.id); }}
                 className="p-1.5 rounded text-gray-400 hover:text-[#185FA5] hover:bg-blue-50 transition-colors"
               >
                 <PersonAddOutlined fontSize="small" />
@@ -75,7 +80,7 @@ export const ConnectionCard = ({ connection, index, onEdit, onDelete, onAddConta
               transition: Zoom,
             }}>
               <button
-                onClick={() => onAddMessage(connection.id)}
+                onClick={(e) => { e.stopPropagation(); onAddMessage(connection.id); }}
                 className="p-1.5 rounded text-gray-400 hover:text-[#185FA5] hover:bg-blue-50 transition-colors"
               >
                 <MailOutlined fontSize="small" />
@@ -88,7 +93,7 @@ export const ConnectionCard = ({ connection, index, onEdit, onDelete, onAddConta
             transition: Zoom,
           }}>
             <button
-              onClick={() => onEdit(connection)}
+              onClick={(e) => { e.stopPropagation(); onEdit(connection); }}
               className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <EditOutlined fontSize="small" />
@@ -98,7 +103,7 @@ export const ConnectionCard = ({ connection, index, onEdit, onDelete, onAddConta
             transition: Zoom,
           }}>
             <button
-              onClick={() => onDelete(connection.id)}
+              onClick={(e) => { e.stopPropagation(); onDelete(connection.id); }}
               className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               <DeleteOutlined fontSize="small" />

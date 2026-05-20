@@ -89,7 +89,7 @@ export const ContactModal = ({ isOpen, onClose, onSave, editingContact, connecti
                       boxShadow: 'none'
                     }
                   }
-                }}
+                } as any}
               >
                 <MenuItem value="" disabled sx={{ fontSize: '0.875rem' }}>
                   Selecione uma conexão

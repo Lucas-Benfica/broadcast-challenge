@@ -79,10 +79,15 @@ export default function Messages() {
     },
   };
 
-  const menuProps = {
+  const menuProps: any = {
     PaperProps: {
       elevation: 0,
-      sx: { border: '0.5px solid #e5e7eb', borderRadius: '0.5rem', mt: 0.5, boxShadow: 'none' }
+      sx: {
+        border: '0.5px solid #e5e7eb',
+        borderRadius: '0.5rem',
+        mt: 0.5,
+        boxShadow: 'none'
+      }
     }
   };
 

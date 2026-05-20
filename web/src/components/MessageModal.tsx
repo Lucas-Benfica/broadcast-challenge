@@ -89,7 +89,7 @@ export const MessageModal = ({ isOpen, onClose, onSave, connections, contacts, p
     },
   };
 
-  const menuProps = {
+  const menuProps: any = {
     PaperProps: {
       elevation: 0,
       sx: {
@@ -161,7 +161,7 @@ export const MessageModal = ({ isOpen, onClose, onSave, connections, contacts, p
                 filteredContacts.map(c => (
                   <MenuItem key={c.id} value={c.id} sx={{ fontSize: '0.875rem', p: 0 }}>
                     <Checkbox checked={contactIds.indexOf(c.id) > -1} size="small" />
-                    <ListItemText primary={c.name} primaryTypographyProps={{ fontSize: '0.875rem' }} />
+                    <ListItemText primary={<span style={{ fontSize: '0.875rem' }}>{c.name}</span>} />
                   </MenuItem>
                 ))
               )}

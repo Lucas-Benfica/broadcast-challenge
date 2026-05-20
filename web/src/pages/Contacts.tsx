@@ -143,7 +143,7 @@ export default function Contacts() {
                   boxShadow: 'none'
                 }
               }
-            }}
+            } as any}
           >
             <MenuItem value="" sx={{ fontSize: '0.875rem' }}>Todas as conexões</MenuItem>
             {connections.map(c => (

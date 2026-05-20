@@ -4,16 +4,19 @@ import { Tooltip, Zoom } from "@mui/material";
 import { useAuth } from "../hooks/useAuth";
 import { useConnections, type Connection } from "../hooks/useConnections";
 import { useContacts } from "../hooks/useContacts";
+import { useMessages } from "../hooks/useMessages";
 import { MetricCard } from "../components/MetricCard";
 import { ConnectionCard } from "../components/ConnectionCard";
 import { ConnectionModal } from "../components/ConnectionModal";
 import { ContactModal } from "../components/ContactModal";
+import { MessageModal } from "../components/MessageModal";
 import toast from "react-hot-toast";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { connections, loading: connectionsLoading, addConnection, updateConnection, deleteConnection } = useConnections(user?.uid);
   const { contacts, addContact } = useContacts(user?.uid);
+  const { messages, addMessage } = useMessages(user?.uid);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -25,11 +28,15 @@ export default function Dashboard() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactModalPreselectedConnId, setContactModalPreselectedConnId] = useState("");
 
+  // Modal de Mensagem
+  const [isMsgModalOpen, setIsMsgModalOpen] = useState(false);
+  const [msgModalPreselectedConnId, setMsgModalPreselectedConnId] = useState("");
+
   // Derivar métricas puramente
   const totalConnections = connections.length;
   // O total de contatos vem do hook global de contatos
   const totalContacts = contacts.length;
-  const totalMessages = connections.reduce((acc, curr) => acc + curr.messagesCount, 0);
+  const totalMessages = messages.length;
 
   // Filtrar busca reativamente
   const filteredConnections = useMemo(() => {
@@ -99,6 +106,28 @@ export default function Dashboard() {
     }
   };
 
+  // Ações Mensagem
+  const handleOpenCreateMsgGlobal = () => {
+    setMsgModalPreselectedConnId("");
+    setIsMsgModalOpen(true);
+  };
+
+  const handleOpenCreateMsgForConn = (connId: string) => {
+    setMsgModalPreselectedConnId(connId);
+    setIsMsgModalOpen(true);
+  };
+
+  const handleSaveMessage = async (data: { connectionId: string; contactIds: string[]; content: string; status: 'SENT' | 'SCHEDULED'; scheduledAt: string }) => {
+    try {
+      await addMessage(data);
+      toast.success(data.status === 'SENT' ? "Mensagem enviada com sucesso!" : "Mensagem agendada!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao processar mensagem.");
+      throw error;
+    }
+  };
+
   if (connectionsLoading) {
     return <div className="flex h-64 items-center justify-center text-gray-400">Carregando conexões...</div>;
   }
@@ -148,7 +177,7 @@ export default function Dashboard() {
             transition: Zoom,
           }}>
             <button
-              onClick={() => { }} // TODO: Nova Mensagem
+              onClick={handleOpenCreateMsgGlobal}
               className="flex items-center justify-center gap-1 bg-white border-[0.5px] border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-md font-medium text-sm transition-colors"
             >
               <MailOutlined fontSize="small" />
@@ -168,18 +197,19 @@ export default function Dashboard() {
       {filteredConnections.length > 0 ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
           {filteredConnections.map((conn, index) => {
-            // Contagem real de contatos para essa conexão no client side (flat structure)
+            // Contagem real de contatos e mensagens para essa conexão no client side (flat structure)
             const connContactsCount = contacts.filter(c => c.connectionId === conn.id).length;
+            const connMsgsCount = messages.filter(m => m.connectionId === conn.id).length;
 
             return (
               <ConnectionCard
                 key={conn.id}
-                connection={{ ...conn, contactsCount: connContactsCount }}
+                connection={{ ...conn, contactsCount: connContactsCount, messagesCount: connMsgsCount }}
                 index={index}
                 onEdit={handleOpenEditConn}
                 onDelete={handleDeleteConn}
                 onAddContact={handleOpenCreateContactForConn}
-                onAddMessage={() => { }} // TODO: Nova Mensagem Modal
+                onAddMessage={handleOpenCreateMsgForConn}
               />
             );
           })}
@@ -205,6 +235,15 @@ export default function Dashboard() {
         editingContact={null}
         connections={connections}
         preselectedConnectionId={contactModalPreselectedConnId}
+      />
+
+      <MessageModal
+        isOpen={isMsgModalOpen}
+        onClose={() => setIsMsgModalOpen(false)}
+        onSave={handleSaveMessage}
+        connections={connections}
+        contacts={contacts}
+        preselectedConnectionId={msgModalPreselectedConnId}
       />
     </>
   );

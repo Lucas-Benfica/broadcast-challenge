@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
-import { CellTower } from "@mui/icons-material";
+import { CellTower, LogoutOutlined } from "@mui/icons-material";
+import { Tooltip, Zoom } from "@mui/material";
 import { useAuth } from "../hooks/useAuth";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../services/firebase";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +13,16 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+  };
 
   // Pegar iniciais do usuário
   const getInitials = (name: string | null | undefined, email: string | null | undefined) => {
@@ -49,8 +62,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 key={link.path}
                 to={link.path}
                 className={`text-sm font-medium transition-colors px-3 py-1.5 rounded-md ${isActive
-                    ? "bg-blue-50 text-[#185FA5]"
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                  ? "bg-blue-50 text-[#185FA5]"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                   }`}
               >
                 {link.label}
@@ -62,9 +75,20 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* Direita: Usuário */}
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500 hidden md:block">{userName}</span>
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-medium">
+          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-medium cursor-default">
             {initials}
           </div>
+          <div className="w-[1px] h-4 bg-gray-200 mx-1"></div>
+          <Tooltip title="Sair do sistema" placement="bottom" arrow slots={{
+            transition: Zoom,
+          }}>
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50 flex items-center justify-center"
+            >
+              <LogoutOutlined fontSize="small" />
+            </button>
+          </Tooltip>
         </div>
       </header>
 
@@ -77,8 +101,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               key={link.path}
               to={link.path}
               className={`text-sm font-medium transition-colors px-3 py-1.5 rounded-md whitespace-nowrap ${isActive
-                  ? "bg-blue-50 text-[#185FA5]"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                ? "bg-blue-50 text-[#185FA5]"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                 }`}
             >
               {link.label}

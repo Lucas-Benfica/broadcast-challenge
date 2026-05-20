@@ -6,6 +6,7 @@ import { useContacts, type Contact } from "../hooks/useContacts";
 import { useConnections } from "../hooks/useConnections";
 import { ContactModal } from "../components/ContactModal";
 import { ContactsTable } from "../components/ContactsTable";
+import { ConfirmModal } from "../components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function Contacts() {
@@ -17,6 +18,7 @@ export default function Contacts() {
   const [filterConnectionId, setFilterConnectionId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(c => {
@@ -36,15 +38,24 @@ export default function Contacts() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir este contato?")) {
-      try {
-        await deleteContact(id);
-        toast.success("Contato excluído.");
-      } catch (error) {
-        console.error(error);
-        toast.error("Erro ao excluir contato.");
-      }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingContact(null);
+  };
+
+  const handleDelete = (id: string) => {
+    setConfirmDeleteState({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteState.id) return;
+    try {
+      await deleteContact(confirmDeleteState.id);
+      toast.success("Contato excluído com sucesso.");
+      setConfirmDeleteState({ isOpen: false, id: null });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir contato.");
     }
   };
 
@@ -151,10 +162,18 @@ export default function Contacts() {
 
       <ContactModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         onSave={handleSaveContact}
         editingContact={editingContact}
         connections={connections}
+      />
+
+      <ConfirmModal
+        isOpen={confirmDeleteState.isOpen}
+        onClose={() => setConfirmDeleteState({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Excluir Contato?"
+        description="Tem certeza que deseja excluir permanentemente este contato? Essa ação não pode ser desfeita."
       />
     </>
   );

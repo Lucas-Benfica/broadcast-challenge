@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, writeBatch, getDocs } from "firebase/firestore";
 import { db } from "../services/firebase";
 
 export interface Connection {
@@ -54,8 +54,35 @@ export const useConnections = (clientId: string | undefined) => {
   };
 
   const deleteConnection = async (id: string) => {
+    if (!clientId) return; // Segurança extra
+
+    // Usando writeBatch para exclusão em cascata de forma atômica
+    const batch = writeBatch(db);
+    
+    // 1. Referência da conexão
     const ref = doc(db, "connections", id);
-    await deleteDoc(ref);
+    batch.delete(ref);
+
+    // 2. Busca e deleta contatos da conexão (OBRIGATÓRIO TER O FILTRO DE clientId PARA A REGRA DE SEGURANÇA NÃO BLOQUEAR)
+    const contactsQ = query(
+      collection(db, "contacts"), 
+      where("connectionId", "==", id),
+      where("clientId", "==", clientId)
+    );
+    const contactsSnap = await getDocs(contactsQ);
+    contactsSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // 3. Busca e deleta mensagens da conexão (OBRIGATÓRIO TER O FILTRO DE clientId PARA A REGRA DE SEGURANÇA NÃO BLOQUEAR)
+    const messagesQ = query(
+      collection(db, "messages"), 
+      where("connectionId", "==", id),
+      where("clientId", "==", clientId)
+    );
+    const messagesSnap = await getDocs(messagesQ);
+    messagesSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // Comita tudo (Se falhar em 1, falha em todos. Se der certo, deleta tudo limpo)
+    await batch.commit();
   };
 
   return {

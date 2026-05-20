@@ -11,6 +11,7 @@ import { MessagesTable } from "../components/MessagesTable";
 import { ConnectionModal } from "../components/ConnectionModal";
 import { ContactModal } from "../components/ContactModal";
 import { MessageModal } from "../components/MessageModal";
+import { ConfirmModal } from "../components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function ConnectionDetails() {
@@ -29,6 +30,10 @@ export default function ConnectionDetails() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isMsgModalOpen, setIsMsgModalOpen] = useState(false);
+
+  const [deleteConnModalOpen, setDeleteConnModalOpen] = useState(false);
+  const [deleteContactState, setDeleteContactState] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [deleteMessageState, setDeleteMessageState] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   if (connLoading) {
     return <div className="flex h-64 items-center justify-center text-gray-400">Carregando detalhes...</div>;
@@ -56,15 +61,35 @@ export default function ConnectionDetails() {
     }
   };
 
-  const handleDeleteConnection = async () => {
-    if (window.confirm("Tem certeza que deseja excluir esta conexão? Contatos e mensagens ficarão orfãos ou excluídos.")) {
-      try {
-        await deleteConnection(connection.id);
-        toast.success("Conexão excluída.");
-        navigate("/connections");
-      } catch (e) {
-        toast.error("Erro ao excluir.");
-      }
+  const confirmDeleteConnection = async () => {
+    try {
+      await deleteConnection(connection.id);
+      toast.success("Conexão e dependências excluídas.");
+      navigate("/connections");
+    } catch (e) {
+      toast.error("Erro ao excluir conexão.");
+    }
+  };
+
+  const confirmDeleteContact = async () => {
+    if (!deleteContactState.id) return;
+    try {
+      await deleteContact(deleteContactState.id);
+      toast.success("Contato excluído.");
+      setDeleteContactState({ isOpen: false, id: null });
+    } catch (e) {
+      toast.error("Erro ao excluir contato.");
+    }
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!deleteMessageState.id) return;
+    try {
+      await deleteMessage(deleteMessageState.id);
+      toast.success("Mensagem excluída.");
+      setDeleteMessageState({ isOpen: false, id: null });
+    } catch (e) {
+      toast.error("Erro ao excluir mensagem.");
     }
   };
 
@@ -144,7 +169,7 @@ export default function ConnectionDetails() {
             <Tooltip title="Excluir Conexão" placement="top" arrow slots={{
               transition: Zoom,
             }}>
-              <button onClick={handleDeleteConnection} className="p-2 rounded-md bg-white border-[0.5px] border-gray-200 text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors">
+              <button onClick={() => setDeleteConnModalOpen(true)} className="p-2 rounded-md bg-white border-[0.5px] border-gray-200 text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors">
                 <DeleteOutlined fontSize="small" />
               </button>
             </Tooltip>
@@ -175,9 +200,7 @@ export default function ConnectionDetails() {
             contacts={contacts}
             connections={connections}
             onEdit={(c) => { setEditingContact(c); setIsContactModalOpen(true); }}
-            onDelete={async (id) => {
-              if (window.confirm("Deseja apagar o contato?")) await deleteContact(id);
-            }}
+            onDelete={(id) => setDeleteContactState({ isOpen: true, id })}
             hideConnectionColumn
           />
       )}
@@ -188,9 +211,7 @@ export default function ConnectionDetails() {
             messages={messages}
             connections={connections}
             contacts={contacts}
-            onDelete={async (id) => {
-              if (window.confirm("Deseja apagar a mensagem?")) await deleteMessage(id);
-            }}
+            onDelete={(id) => setDeleteMessageState({ isOpen: true, id })}
             hideConnectionColumn
           />
       )}
@@ -219,6 +240,30 @@ export default function ConnectionDetails() {
         connections={connections}
         contacts={contacts}
         preselectedConnectionId={connection.id}
+      />
+
+      <ConfirmModal
+        isOpen={deleteConnModalOpen}
+        onClose={() => setDeleteConnModalOpen(false)}
+        onConfirm={confirmDeleteConnection}
+        title="Excluir Conexão?"
+        description="Tem certeza que deseja excluir esta conexão? Isso removerá permanentemente a conexão e TODOS os contatos e mensagens associados a ela (Exclusão em cascata)."
+      />
+
+      <ConfirmModal
+        isOpen={deleteContactState.isOpen}
+        onClose={() => setDeleteContactState({ isOpen: false, id: null })}
+        onConfirm={confirmDeleteContact}
+        title="Excluir Contato?"
+        description="Tem certeza que deseja excluir permanentemente este contato?"
+      />
+
+      <ConfirmModal
+        isOpen={deleteMessageState.isOpen}
+        onClose={() => setDeleteMessageState({ isOpen: false, id: null })}
+        onConfirm={confirmDeleteMessage}
+        title="Excluir Mensagem?"
+        description="Tem certeza que deseja excluir permanentemente esta mensagem?"
       />
     </>
   );

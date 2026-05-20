@@ -10,6 +10,7 @@ import { ConnectionCard } from "../components/ConnectionCard";
 import { ConnectionModal } from "../components/ConnectionModal";
 import { ContactModal } from "../components/ContactModal";
 import { MessageModal } from "../components/MessageModal";
+import { ConfirmModal } from "../components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function Dashboard() {
@@ -30,7 +31,8 @@ export default function Dashboard() {
 
   // Modal de Mensagem
   const [isMsgModalOpen, setIsMsgModalOpen] = useState(false);
-  const [msgModalPreselectedConnId, setMsgModalPreselectedConnId] = useState("");
+  const [preselectedConnectionId, setPreselectedConnectionId] = useState<string | undefined>();
+  const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   // Derivar métricas puramente
   const totalConnections = connections.length;
@@ -56,15 +58,19 @@ export default function Dashboard() {
     setIsConnModalOpen(true);
   };
 
-  const handleDeleteConn = async (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta conexão? Contatos e mensagens associadas ficarão orfãos ou excluídos.")) {
-      try {
-        await deleteConnection(id);
-        toast.success("Conexão excluída.");
-      } catch (error) {
-        console.error(error);
-        toast.error("Erro ao excluir conexão.");
-      }
+  const handleDeleteConnection = (id: string) => {
+    setConfirmDeleteState({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteState.id) return;
+    try {
+      await deleteConnection(confirmDeleteState.id);
+      toast.success("Conexão e dependências excluídas.");
+      setConfirmDeleteState({ isOpen: false, id: null });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir conexão.");
     }
   };
 
@@ -108,12 +114,12 @@ export default function Dashboard() {
 
   // Ações Mensagem
   const handleOpenCreateMsgGlobal = () => {
-    setMsgModalPreselectedConnId("");
+    setPreselectedConnectionId(undefined);
     setIsMsgModalOpen(true);
   };
 
   const handleOpenCreateMsgForConn = (connId: string) => {
-    setMsgModalPreselectedConnId(connId);
+    setPreselectedConnectionId(connId);
     setIsMsgModalOpen(true);
   };
 
@@ -207,7 +213,7 @@ export default function Dashboard() {
                 connection={{ ...conn, contactsCount: connContactsCount, messagesCount: connMsgsCount }}
                 index={index}
                 onEdit={handleOpenEditConn}
-                onDelete={handleDeleteConn}
+                onDelete={handleDeleteConnection}
                 onAddContact={handleOpenCreateContactForConn}
                 onAddMessage={handleOpenCreateMsgForConn}
               />
@@ -243,7 +249,15 @@ export default function Dashboard() {
         onSave={handleSaveMessage}
         connections={connections}
         contacts={contacts}
-        preselectedConnectionId={msgModalPreselectedConnId}
+        preselectedConnectionId={preselectedConnectionId}
+      />
+
+      <ConfirmModal
+        isOpen={confirmDeleteState.isOpen}
+        onClose={() => setConfirmDeleteState({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Excluir Conexão?"
+        description="Tem certeza que deseja excluir esta conexão? Isso removerá permanentemente a conexão e TODOS os contatos e mensagens associados a ela (Exclusão em cascata)."
       />
     </>
   );

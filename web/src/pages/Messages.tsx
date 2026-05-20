@@ -7,6 +7,7 @@ import { useConnections } from "../hooks/useConnections";
 import { useContacts } from "../hooks/useContacts";
 import { MessageModal } from "../components/MessageModal";
 import { MessagesTable } from "../components/MessagesTable";
+import { ConfirmModal } from "../components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function Messages() {
@@ -19,6 +20,7 @@ export default function Messages() {
   const [filterConnectionId, setFilterConnectionId] = useState("");
   const [filterStatus, setFilterStatus] = useState(""); 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmDeleteState, setConfirmDeleteState] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   const filteredMessages = useMemo(() => {
     return messages.filter(m => {
@@ -29,15 +31,19 @@ export default function Messages() {
     });
   }, [messages, searchQuery, filterConnectionId, filterStatus]);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta mensagem?")) {
-      try {
-        await deleteMessage(id);
-        toast.success("Mensagem excluída.");
-      } catch (error) {
-        console.error(error);
-        toast.error("Erro ao excluir mensagem.");
-      }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteState({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteState.id) return;
+    try {
+      await deleteMessage(confirmDeleteState.id);
+      toast.success("Mensagem excluída.");
+      setConfirmDeleteState({ isOpen: false, id: null });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir mensagem.");
     }
   };
 
@@ -159,6 +165,14 @@ export default function Messages() {
         onSave={handleSaveMessage}
         connections={connections}
         contacts={contacts}
+      />
+
+      <ConfirmModal
+        isOpen={confirmDeleteState.isOpen}
+        onClose={() => setConfirmDeleteState({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Excluir Mensagem?"
+        description="Tem certeza que deseja excluir permanentemente esta mensagem? Essa ação não pode ser desfeita."
       />
     </>
   );
